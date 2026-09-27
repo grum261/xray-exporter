@@ -1,0 +1,42 @@
+[Unit]
+Description=Xray Prometheus exporter
+Documentation=https://github.com/grum261/xray-exporter
+After=network-online.target xray.service
+Wants=xray.service
+
+[Service]
+Type=simple
+User=nobody
+Group=nogroup
+ExecStart=/usr/local/bin/xray-exporter \
+  --web.listen-address=127.0.0.1:9356 \
+  --xray.endpoint=http://127.0.0.1:11111/debug/vars \
+  --xray.timeout=5s \
+  --log.level=info
+
+Restart=on-failure
+RestartSec=5s
+
+# Sandboxing — no filesystem writes, no privileges, limited syscalls.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources @mount
+
+# Resource limits — exporter is tiny, never needs more than this.
+MemoryMax=64M
+CPUQuota=20%
+
+[Install]
+WantedBy=multi-user.target
