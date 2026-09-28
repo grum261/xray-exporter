@@ -73,12 +73,20 @@ tar -xzf xray-exporter-*.tar.gz
 
 # With the Go toolchain (Go 1.26+):
 go install github.com/grum261/xray-exporter/cmd/xray-exporter@latest
+
+# Container image (linux/amd64, arm64 and arm/v7):
+docker pull ghcr.io/grum261/xray-exporter:latest
 ```
 
 **3. Run it:**
 
 ```bash
 xray-exporter --xray.endpoint=http://127.0.0.1:11111/debug/vars
+
+# Or in Docker. The host network lets the container reach Xray on 127.0.0.1:
+docker run -d --name xray-exporter --network host ghcr.io/grum261/xray-exporter:latest \
+  --xray.endpoint=http://127.0.0.1:11111/debug/vars
+
 curl -s http://127.0.0.1:9356/metrics | grep '^xray_'
 ```
 
@@ -91,7 +99,7 @@ scrape_configs:
       - targets: ["127.0.0.1:9356"]
 ```
 
-To run the exporter as a systemd service and import the Grafana dashboard, see
+To run the exporter as a systemd service or with Docker Compose and import the Grafana dashboard, see
 [docs/deployment.md](docs/deployment.md).
 
 ## Configuration
