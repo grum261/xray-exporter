@@ -59,8 +59,9 @@
         "type": "query",
         "label": "Outbound",
         "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-        "definition": "label_values(xray_observatory_alive, tag)",
-        "query": { "query": "label_values(xray_observatory_alive, tag)", "refId": "StandardVariableQuery" },
+        "definition": "query_result(max by (tag) (xray_observatory_alive))",
+        "query": { "query": "query_result(max by (tag) (xray_observatory_alive))", "refId": "StandardVariableQuery" },
+        "regex": "/tag=\"([^\"]+)\"/",
         "refresh": 2,
         "sort": 1,
         "multi": true,
@@ -226,7 +227,7 @@
       "type": "stat",
       "id": 6,
       "title": "$outbound",
-      "description": "One tile per observatory outbound: green = alive, red = down. The panel repeats over the `outbound` template variable (label_values of xray_observatory_alive), so new outbounds appear automatically.",
+      "description": "One tile per observatory outbound: green = alive, red = down, grey = no data in the selected range. The panel repeats over the `outbound` template variable, which lists the outbounds xray_observatory_alive reports at the end of the range: new outbounds appear automatically and removed ones disappear.",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "gridPos": { "h": 4, "w": 4, "x": 0, "y": 5 },
       "repeat": "outbound",
@@ -253,7 +254,8 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
+              { "color": "#808080", "value": null },
+              { "color": "red", "value": 0 },
               { "color": "green", "value": 1 }
             ]
           },
@@ -417,14 +419,14 @@
       "type": "bargauge",
       "id": 16,
       "title": "Egress per outbound (24h, up + down)",
-      "description": "Data transferred per outbound over the last 24h (up + down), independent of the dashboard time range — useful for tracking node quotas / metered plans.",
+      "description": "Data transferred per outbound over the last 24h (up + down), useful for tracking node quotas / metered plans. The 24h window doesn't follow the dashboard time range, but only outbounds that report data within that range are listed, so renamed or removed outbounds drop off.",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 26 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-          "expr": "sum by (tag) (increase(xray_outbound_downlink_bytes_total{instance=~\"$instance\"}[24h]) + increase(xray_outbound_uplink_bytes_total{instance=~\"$instance\"}[24h])) > 0",
+          "expr": "(sum by (tag) (increase(xray_outbound_downlink_bytes_total{instance=~\"$instance\"}[24h]) + increase(xray_outbound_uplink_bytes_total{instance=~\"$instance\"}[24h])) > 0) and on (tag) last_over_time(xray_outbound_downlink_bytes_total{instance=~\"$instance\"}[$__range])",
           "legendFormat": "{{tag}}",
           "instant": true
         }
