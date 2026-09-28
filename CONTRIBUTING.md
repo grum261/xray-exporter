@@ -10,6 +10,7 @@ Requirements:
 - Go (the version is set in [`go.mod`](go.mod))
 - [golangci-lint](https://golangci-lint.run/) v2
 - [GoReleaser](https://goreleaser.com/) v2, needed only for `make snapshot`
+- Docker with buildx, needed only for `make docker` and `make snapshot`
 
 | Command | What it does |
 |---------|--------------|
@@ -18,7 +19,8 @@ Requirements:
 | `make test` | Runs the unit tests with the race detector. Use `make test RACE=` to turn the race detector off. |
 | `make test-cover` | Runs the tests and prints a coverage report. |
 | `make lint` | Runs golangci-lint with [`.golangci.yml`](.golangci.yml). |
-| `make snapshot` | Builds all release archives into `dist/` without publishing them. |
+| `make docker` | Builds the container image `xray-exporter:dev` from source ([`Dockerfile`](Dockerfile)). |
+| `make snapshot` | Builds all release archives into `dist/` and the release images for each platform, without publishing them. |
 
 CI runs `lint`, `test` and `snapshot` on every push and pull request.
 
@@ -36,6 +38,8 @@ internal/singleflight/  generic singleflight used by CachedClient
 internal/version/       build metadata (version, revision, commit date)
 option/                 generic functional-option helper
 deploy/                 systemd unit, Prometheus scrape job, Grafana dashboard
+Dockerfile              container image built from source
+goreleaser.Dockerfile   release image built from the GoReleaser binaries
 docs/                   user documentation
 ```
 
@@ -72,4 +76,7 @@ git push origin v1.2.3
 
 The [release workflow](.github/workflows/release.yml) runs the tests. Then
 GoReleaser builds archives for every platform, with checksums, and publishes
-a GitHub release with the changelog.
+a GitHub release with the changelog. It also pushes a multi-arch image to
+`ghcr.io/grum261/xray-exporter`, tagged `X.Y.Z`, `X.Y`, `X` and `latest`. The
+image is built from [`goreleaser.Dockerfile`](goreleaser.Dockerfile) and
+reuses the release binaries.

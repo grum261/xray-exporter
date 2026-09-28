@@ -38,6 +38,34 @@ archives:
 checksum:
   name_template: sha256sums.txt
 
+dockers_v2:
+  - dockerfile: goreleaser.Dockerfile
+    images:
+      - ghcr.io/grum261/xray-exporter
+    tags:
+      - "{{ .Version }}"
+      - "{{ if not .Prerelease }}{{ .Major }}.{{ .Minor }}{{ end }}"
+      - "{{ if not .Prerelease }}{{ .Major }}{{ end }}"
+      - "{{ if not .Prerelease }}latest{{ end }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+      - linux/arm/v7
+    labels:
+      org.opencontainers.image.title: "{{ .ProjectName }}"
+      org.opencontainers.image.description: Prometheus exporter for Xray-core
+      org.opencontainers.image.version: "{{ .Version }}"
+      org.opencontainers.image.revision: "{{ .FullCommit }}"
+      org.opencontainers.image.created: "{{ .CommitDate }}"
+      org.opencontainers.image.source: https://github.com/grum261/xray-exporter
+      org.opencontainers.image.licenses: MIT
+    # Shown by GHCR on the multi-arch image. Snapshots build one image per
+    # platform, which has no index, so the values are left empty (= skipped).
+    annotations:
+      "index:org.opencontainers.image.description": "{{ if not .IsSnapshot }}Prometheus exporter for Xray-core{{ end }}"
+      "index:org.opencontainers.image.source": "{{ if not .IsSnapshot }}https://github.com/grum261/xray-exporter{{ end }}"
+      "index:org.opencontainers.image.licenses": "{{ if not .IsSnapshot }}MIT{{ end }}"
+
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 

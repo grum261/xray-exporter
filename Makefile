@@ -38,6 +38,13 @@ test-cover:
 lint:
 	golangci-lint run ./...
 
+IMAGE ?= xray-exporter:dev
+
+# Builds a container image from source (see Dockerfile).
+.PHONY: docker
+docker:
+	docker build -t $(IMAGE) .
+
 # Builds every release artifact locally into dist/ without publishing.
 .PHONY: snapshot
 snapshot:

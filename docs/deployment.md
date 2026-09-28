@@ -1,8 +1,8 @@
 # Deployment
 
-This guide runs xray-exporter as a systemd service on the host where Xray
-runs. It then adds the exporter to Prometheus and imports the Grafana
-dashboard. First, set up Xray as described in [Xray setup](xray-setup.md).
+This guide runs xray-exporter on the host where Xray runs, either as a
+systemd service or in Docker. It then adds the exporter to Prometheus and
+imports the Grafana dashboard. First, set up Xray as described in [Xray setup](xray-setup.md).
 
 ## Files
 
@@ -69,6 +69,54 @@ Replace the binary and restart the service:
 sudo install -m 0755 xray-exporter /usr/local/bin/xray-exporter
 sudo systemctl restart xray-exporter
 ```
+
+### Alternative: Docker
+
+You can run the container image instead of installing the binary and the
+unit. The image is published to
+[GHCR](https://github.com/grum261/xray-exporter/pkgs/container/xray-exporter)
+for `linux/amd64`, `linux/arm64` and `linux/arm/v7`. It is built on
+distroless, contains only the binary, and runs as a non-root user.
+
+Xray usually serves `/debug/vars` on the host's `127.0.0.1`. A container on
+Docker's default bridge network can't reach that address, so run the exporter
+on the host network. Host networking is available only on Linux.
+
+```bash
+docker run -d --name xray-exporter --restart unless-stopped \
+  --network host --read-only \
+  ghcr.io/grum261/xray-exporter:1 \
+  --web.listen-address=127.0.0.1:9356 \
+  --xray.endpoint=http://127.0.0.1:11111/debug/vars
+```
+
+The same setup with Docker Compose:
+
+```yaml
+services:
+  xray-exporter:
+    image: ghcr.io/grum261/xray-exporter:1
+    network_mode: host
+    read_only: true
+    restart: unless-stopped
+    command:
+      - --web.listen-address=127.0.0.1:9356
+      - --xray.endpoint=http://127.0.0.1:11111/debug/vars
+```
+
+- Flags go after the image name, as shown above. The environment variables
+  from [Configuration](configuration.md) also work, for example
+  `-e XRAY_TIMEOUT=3s`.
+- If Xray also runs in a container, connect both containers to one Docker
+  network and skip the host network. Set Xray's `metrics.listen` to
+  `0.0.0.0:11111`, don't publish that port, and start the exporter with
+  `--xray.endpoint=http://<xray-container>:11111/debug/vars`.
+- Available tags: `X.Y.Z` pins a release, `X.Y` gets patch releases, `X`
+  gets minor releases, and `latest` is the newest release. To upgrade, pull
+  the new image and recreate the container.
+
+To build the image from source, run `docker build -t xray-exporter .` in the
+repository root.
 
 ## 2. Add the Prometheus scrape job
 
