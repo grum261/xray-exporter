@@ -41,6 +41,22 @@ tags without that.
 - [Grafana dashboard](deploy/xray-grafana-dashboard.json) and a hardened
   [systemd unit](deploy/xray-exporter.service) are included.
 
+## Grafana dashboard
+
+The [included dashboard](deploy/xray-grafana-dashboard.json) opens with scrape
+health, the status of each observatory outbound and throughput per inbound and
+outbound tag.
+
+![Overview and Traffic rows of the Grafana dashboard](docs/images/dashboard-overview.png)
+
+The Observatory row shows uptime, status flaps, probe latency and failed probes
+for each outbound.
+
+![Observatory row of the Grafana dashboard](docs/images/dashboard-observatory.png)
+
+Further rows cover the exporter's own health and Xray's runtime memory stats.
+See [docs/deployment.md](docs/deployment.md) for how to import it.
+
 ## Quick start
 
 **1. Enable metrics in Xray.** Add these top-level keys to your Xray config
